@@ -1,1 +1,2261 @@
-www.corporacionredneural.com
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador PUMA 500 - Versión Profesional</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --text-color: #34495e;
+            --text-light: #7f8c8d;
+        }
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-color);
+        }
+        
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+        
+        #control-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 380px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            z-index: 10;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            margin: 0 0 15px 0;
+            color: var(--dark-color);
+            font-weight: 600;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .panel-title svg {
+            margin-right: 10px;
+            fill: var(--primary-color);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button svg {
+            margin-right: 6px;
+        }
+        
+        #stopBtn {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #c0392b 100%);
+        }
+        
+        #resetBtn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+        
+        #patternBtn {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #27ae60 100%);
+        }
+        
+        .joint-control {
+            margin: 12px 0;
+        }
+        
+        .joint-control label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-color) var(--value-percent), var(--light-color) var(--value-percent), var(--light-color) 100%);
+            border-radius: 10px;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        input[type="range"]:hover::-webkit-slider-thumb {
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        #status {
+            margin-top: 15px;
+            font-family: 'Roboto Mono', monospace;
+            background: rgba(236, 240, 241, 0.6);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            height: 80px;
+            overflow-y: auto;
+            line-height: 1.5;
+            color: var(--text-color);
+            border-left: 3px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        #status.success {
+            border-left-color: var(--secondary-color);
+        }
+        
+        #status.error {
+            border-left-color: var(--danger-color);
+        }
+        
+        #status.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .progress-container {
+            margin-top: 12px;
+            height: 6px;
+            background: var(--light-color);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        .painting-params {
+            margin-top: 12px;
+        }
+        
+        .param-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        
+        .param-control label {
+            color: var(--text-light);
+            flex: 1;
+        }
+        
+        .param-control input {
+            width: 60px;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: right;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+        }
+        
+        .param-control select {
+            width: 120px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab {
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-light);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        #stats-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            z-index: 10;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .stats-label {
+            color: var(--text-light);
+        }
+        
+        .stats-value {
+            font-weight: 500;
+        }
+        
+        #help-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 28px;
+            height: 28px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+        }
+        
+        #help-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        #help-modal h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+        
+        #help-modal h3 {
+            font-size: 15px;
+            margin-top: 15px;
+        }
+        
+        #help-modal p, #help-modal ul {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        #help-modal ul {
+            padding-left: 20px;
+        }
+        
+        #help-modal li {
+            margin-bottom: 6px;
+        }
+        
+        #close-help {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            display: none;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 200px;
+        }
+        
+        #work-envelope-btn {
+            position: absolute;
+            top: 50px;
+            left: 15px;
+            width: 28px;
+            height: 28px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+        }
+        
+        .joints-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        #cartesian-controls {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(236, 240, 241, 0.6);
+            border-radius: 8px;
+        }
+        
+        #teach-panel {
+            margin-top: 15px;
+        }
+        
+        #teach-positions {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 5px;
+            background: rgba(236, 240, 241, 0.6);
+            border-radius: 4px;
+        }
+        
+        .teach-position {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        @media (max-width: 768px) {
+            #control-panel {
+                width: 90%;
+                left: 5%;
+                bottom: 10px;
+            }
+            
+            .joints-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <button id="help-btn">?</button>
+        <button id="work-envelope-btn" title="Mostrar/ocultar espacio de trabajo">W</button>
+        
+        <div id="stats-panel">
+            <div class="stats-row">
+                <span class="stats-label">FPS:</span>
+                <span class="stats-value" id="fps-counter">0</span>
+            </div>
+            <div class="stats-row">
+                <span class="stats-label">Triángulos:</span>
+                <span class="stats-value" id="triangles-counter">0</span>
+            </div>
+            <div class="stats-row">
+                <span class="stats-label">Líneas:</span>
+                <span class="stats-value" id="lines-counter">0</span>
+            </div>
+            <div class="stats-row">
+                <span class="stats-label">Memoria:</span>
+                <span class="stats-value" id="memory-counter">0 MB</span>
+            </div>
+        </div>
+        
+        <div id="control-panel" class="fade-in">
+            <div class="tab-container">
+                <div class="tab active" data-tab="control">Control</div>
+                <div class="tab" data-tab="coordinates">Coordenadas</div>
+                <div class="tab" data-tab="teach">Enseñanza</div>
+                <div class="tab" data-tab="settings">Configuración</div>
+                <div class="tab" data-tab="patterns">Patrones</div>
+                <div class="tab" data-tab="writing">Escritura</div>
+            </div>
+            
+            <div id="control-tab" class="tab-content active">
+                <h3 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path d="M5,12H19A2,2 0 0,1 21,14V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V14A2,2 0 0,1 5,12M6,14V20H18V14H6M5,4H19A2,2 0 0,1 21,6V10A2,2 0 0,1 19,12H5A2,2 0 0,1 3,10V6A2,2 0 0,1 5,4M6,6V10H18V6H6M5,4H19A2,2 0 0,1 21,6V10A2,2 0 0,1 19,12H5A2,2 0 0,1 3,10V6A2,2 0 0,1 5,4M6,6V10H18V6H6Z"/>
+                    </svg>
+                    Control Articulado PUMA 500
+                </h3>
+                
+                <div class="btn-group">
+                    <button id="startBtn" title="Iniciar secuencia de dibujo automático">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M8,5.14V19.14L19,12.14L8,5.14Z"/>
+                        </svg>
+                        Iniciar
+                    </button>
+                    <button id="stopBtn" title="Detener la operación actual">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M14,19H18V5H14M6,19H10V5H6V19Z"/>
+                        </svg>
+                        Detener
+                    </button>
+                    <button id="resetBtn" title="Reiniciar la simulación">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                        </svg>
+                        Reiniciar
+                    </button>
+                </div>
+                
+                <div class="joints-container">
+                    <div class="joint-control">
+                        <label for="joint1">Base (J1) <span id="joint1-value">0.00°</span></label>
+                        <input type="range" id="joint1" min="-160" max="160" step="1" value="0">
+                    </div>
+                    
+                    <div class="joint-control">
+                        <label for="joint2">Hombro (J2) <span id="joint2-value">0.00°</span></label>
+                        <input type="range" id="joint2" min="-110" max="110" step="1" value="0">
+                    </div>
+                    
+                    <div class="joint-control">
+                        <label for="joint3">Codo (J3) <span id="joint3-value">0.00°</span></label>
+                        <input type="range" id="joint3" min="-135" max="135" step="1" value="0">
+                    </div>
+                    
+                    <div class="joint-control">
+                        <label for="joint4">Muñeca (J4) <span id="joint4-value">0.00°</span></label>
+                        <input type="range" id="joint4" min="-266" max="266" step="1" value="0">
+                    </div>
+                    
+                    <div class="joint-control">
+                        <label for="joint5">Rotación (J5) <span id="joint5-value">0.00°</span></label>
+                        <input type="range" id="joint5" min="-100" max="100" step="1" value="0">
+                    </div>
+                    
+                    <div class="joint-control">
+                        <label for="joint6">Pinza (J6) <span id="joint6-value">0.00°</span></label>
+                        <input type="range" id="joint6" min="-90" max="90" step="1" value="0">
+                    </div>
+                </div>
+                
+                <div class="progress-container">
+                    <div id="progress-bar"></div>
+                </div>
+                
+                <div id="status" class="success">
+                    ✅ Sistema PUMA 500 inicializado<br>
+                    ✏️ Herramienta de dibujo activada<br>
+                    ⏳ Esperando inicio de secuencia...
+                </div>
+            </div>
+            
+            <div id="coordinates-tab" class="tab-content">
+                <h3 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/>
+                    </svg>
+                    Control por Coordenadas
+                </h3>
+                
+                <div id="cartesian-controls">
+                    <div class="param-control">
+                        <label for="posX">Posición X (mm):</label>
+                        <input type="number" id="posX" step="1" value="0">
+                    </div>
+                    <div class="param-control">
+                        <label for="posY">Posición Y (mm):</label>
+                        <input type="number" id="posY" step="1" value="300">
+                    </div>
+                    <div class="param-control">
+                        <label for="posZ">Posición Z (mm):</label>
+                        <input type="number" id="posZ" step="1" value="400">
+                    </div>
+                    <div class="param-control">
+                        <label for="roll">Roll (º):</label>
+                        <input type="number" id="roll" min="-180" max="180" step="1" value="0">
+                    </div>
+                    <div class="param-control">
+                        <label for="pitch">Pitch (º):</label>
+                        <input type="number" id="pitch" min="-90" max="90" step="1" value="0">
+                    </div>
+                    <div class="param-control">
+                        <label for="yaw">Yaw (º):</label>
+                        <input type="number" id="yaw" min="-180" max="180" step="1" value="0">
+                    </div>
+                    
+                    <button id="moveToCartesian" style="margin-top: 10px; width: 100%;">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M6,20H15L18,20V12L14,16L12,14L6,20M8,9A2,2 0 0,0 6,11A2,2 0 0,0 8,13A2,2 0 0,0 10,11A2,2 0 0,0 8,9Z"/>
+                        </svg>
+                        Mover a Posición
+                    </button>
+                    
+                    <div id="cartesian-status" style="margin-top: 10px; font-size: 12px; color: var(--text-light);">
+                        Ingrese coordenadas y haga clic en Mover
+                    </div>
+                </div>
+            </div>
+            
+            <div id="teach-tab" class="tab-content">
+                <h3 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path d="M3,3H21V7H3V3M4,8H20V21H4V8M9.5,11A0.5,0.5 0 0,0 9,11.5V13H15V11.5A0.5,0.5 0 0,0 14.5,11H9.5Z"/>
+                    </svg>
+                    Modo Enseñanza
+                </h3>
+                
+                <div class="btn-group">
+                    <button id="recordPositionBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10Z"/>
+                        </svg>
+                        Grabar Posición
+                    </button>
+                    <button id="playSequenceBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M8,5.14V19.14L19,12.14L8,5.14Z"/>
+                        </svg>
+                        Reproducir Secuencia
+                    </button>
+                    <button id="clearSequenceBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+                        </svg>
+                        Limpiar
+                    </button>
+                </div>
+                
+                <div id="teach-panel">
+                    <label>Posiciones grabadas:</label>
+                    <div id="teach-positions"></div>
+                </div>
+            </div>
+            
+            <div id="settings-tab" class="tab-content">
+                <h3 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                    </svg>
+                    Configuración
+                </h3>
+                
+                <div class="painting-params">
+                    <div class="param-control">
+                        <label for="speedControl">Velocidad:</label>
+                        <input type="number" id="speedControl" min="0.1" max="2" step="0.1" value="1.0">
+                    </div>
+                    <div class="param-control">
+                        <label for="spacingControl">Precisión (mm):</label>
+                        <input type="number" id="spacingControl" min="0.5" max="5" step="0.1" value="1.0">
+                    </div>
+                    <div class="param-control">
+                        <label for="widthControl">Ancho (cm):</label>
+                        <input type="number" id="widthControl" min="10" max="50" step="1" value="30">
+                    </div>
+                    <div class="param-control">
+                        <label for="heightControl">Altura (cm):</label>
+                        <input type="number" id="heightControl" min="10" max="50" step="1" value="40">
+                    </div>
+                    <div class="param-control">
+                        <label for="penColor">Color:</label>
+                        <input type="color" id="penColor" value="#ff0000">
+                    </div>
+                    <div class="param-control">
+                        <label for="lineWidth">Grosor línea:</label>
+                        <input type="number" id="lineWidth" min="1" max="10" step="0.5" value="2">
+                    </div>
+                </div>
+                
+                <!-- Nuevo control para seleccionar espacio de trabajo -->
+                <div class="joint-control">
+                    <label for="workSpace">Espacio de trabajo:</label>
+                    <select id="workSpace">
+                        <option value="standard">Estándar</option>
+                        <option value="large">Amplio</option>
+                        <option value="vertical">Vertical</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                
+                <!-- Controles para espacio de trabajo personalizado (ocultos inicialmente) -->
+                <div id="custom-work-space" style="display: none; margin-top: 10px;">
+                    <div class="param-control">
+                        <label for="minX">Min X (mm):</label>
+                        <input type="number" id="minX" step="10" value="-800">
+                    </div>
+                    <div class="param-control">
+                        <label for="maxX">Max X (mm):</label>
+                        <input type="number" id="maxX" step="10" value="800">
+                    </div>
+                    <div class="param-control">
+                        <label for="minY">Min Y (mm):</label>
+                        <input type="number" id="minY" step="10" value="100">
+                    </div>
+                    <div class="param-control">
+                        <label for="maxY">Max Y (mm):</label>
+                        <input type="number" id="maxY" step="10" value="1200">
+                    </div>
+                    <div class="param-control">
+                        <label for="minZ">Min Z (mm):</label>
+                        <input type="number" id="minZ" step="10" value="-800">
+                    </div>
+                    <div class="param-control">
+                        <label for="maxZ">Max Z (mm):</label>
+                        <input type="number" id="maxZ" step="10" value="800">
+                    </div>
+                </div>
+                
+                <div class="joint-control">
+                    <label for="renderQuality">Calidad de renderizado:</label>
+                    <select id="renderQuality">
+                        <option value="low">Baja</option>
+                        <option value="medium" selected>Media</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+                
+                <div class="joint-control">
+                    <label for="showWorkEnvelope">Mostrar espacio de trabajo:</label>
+                    <input type="checkbox" id="showWorkEnvelope" checked>
+                </div>
+                
+                <div class="joint-control">
+                    <label for="showTrajectory">Mostrar trayectoria:</label>
+                    <input type="checkbox" id="showTrajectory" checked>
+                </div>
+                
+                <button id="applySettings" style="margin-top: 15px;">Aplicar Configuración</button>
+            </div>
+            
+            <div id="patterns-tab" class="tab-content">
+                <h3 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path d="M7,11H9V13H7V11M21,3H3V21H21V3M19,5V19H5V5H19M15,11H17V13H15V11M11,11H13V13H11V11M7,15H9V17H7V15M11,15H13V17H11V15M15,15H17V17H15V15Z"/>
+                    </svg>
+                    Patrones de Dibujo
+                </h3>
+                
+                <div class="btn-group">
+                    <button id="logoBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M18.5,2H5.5A1.5,1.5 0 0,0 4,3.5V20.5A1.5,1.5 0 0,0 5.5,22H18.5A1.5,1.5 0 0,0 20,20.5V3.5A1.5,1.5 0 0,0 18.5,2M7.5,4H16.5V8H7.5V4M7.5,10H16.5V14H7.5V10M7.5,16H13V20H7.5V16Z"/>
+                        </svg>
+                        Logo
+                    </button>
+                    <button id="squareBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M3,3V21H21V3H3M5,5H19V19H5V5Z"/>
+                        </svg>
+                        Cuadrado
+                    </button>
+                    <button id="circleBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                        </svg>
+                        Círculo
+                    </button>
+                </div>
+                
+                <div class="btn-group">
+                    <button id="spiralBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                        </svg>
+                        Espiral
+                    </button>
+                    <button id="zigzagBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M3,11H11V3H13V11H21V13H13V21H11V13H3V11Z"/>
+                        </svg>
+                        Zigzag
+                    </button>
+                    <button id="randomBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M14.83,13.41L13.42,14.82L16.55,17.95L14.5,20H20V14.5L17.96,16.54L14.83,13.41M14.5,4L16.54,6.04L4,18.59L5.41,20L17.96,7.46L20,9.5V4H14.5M10.59,9.17L5.41,4L4,5.41L9.17,10.58L10.59,9.17Z"/>
+                        </svg>
+                        Aleatorio
+                    </button>
+                </div>
+                
+                <div id="pattern-status" style="margin-top: 15px; font-size: 12px; color: var(--text-light);">
+                    Seleccione un patrón de dibujo
+                </div>
+            </div>
+            
+            <div id="writing-tab" class="tab-content">
+                <h3 class="panel-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                        <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+                    </svg>
+                    Escritura en Tabla
+                </h3>
+                
+                <div class="param-control">
+                    <label for="textToWrite">Texto a escribir:</label>
+                    <input type="text" id="textToWrite" placeholder="Escribe algo..." style="width: 100%;">
+                </div>
+                
+                <div class="param-control">
+                    <label for="fontSize">Tamaño de letra (cm):</label>
+                    <input type="number" id="fontSize" min="1" max="10" step="0.5" value="3">
+                </div>
+                
+                <div class="param-control">
+                    <label for="fontStyle">Estilo de fuente:</label>
+                    <select id="fontStyle">
+                        <option value="block">Bloque</option>
+                        <option value="cursive">Cursiva</option>
+                        <option value="technical">Técnica</option>
+                    </select>
+                </div>
+                
+                <button id="writeBtn" style="margin-top: 15px; width: 100%;">
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+                    </svg>
+                    Escribir Texto
+                </button>
+                
+                <div id="writing-status" style="margin-top: 15px; font-size: 12px; color: var(--text-light);">
+                    Escriba el texto y haga clic en "Escribir Texto"
+                </div>
+            </div>
+        </div>
+        
+        <div id="help-modal">
+            <button id="close-help">&times;</button>
+            <h2>Ayuda - Simulador PUMA 500</h2>
+            <p>Este simulador representa un brazo robótico PUMA 500 con 6 articulaciones y capacidad de dibujo y escritura.</p>
+            
+            <h3>Articulaciones del PUMA 500</h3>
+            <ul>
+                <li><strong>J1 - Base:</strong> Rotación de ±160°</li>
+                <li><strong>J2 - Hombro:</strong> Movimiento vertical ±110°</li>
+                <li><strong>J3 - Codo:</strong> Flexión/extensión ±135°</li>
+                <li><strong>J4 - Muñeca:</strong> Rotación continua ±266°</li>
+                <li><strong>J5 - Rotación:</strong> Inclinación de la herramienta ±100°</li>
+                <li><strong>J6 - Pinza:</strong> Apertura/cierre ±90°</li>
+            </ul>
+            
+            <h3>Modos de Operación</h3>
+            <ul>
+                <li><strong>Control Articulado:</strong> Control individual de cada articulación</li>
+                <li><strong>Coordenadas Cartesianas:</strong> Control por posición (X,Y,Z) y orientación (Roll, Pitch, Yaw)</li>
+                <li><strong>Modo Enseñanza:</strong> Grabar y reproducir posiciones</li>
+                <li><strong>Patrones:</strong> Dibujar formas predefinidas</li>
+                <li><strong>Escritura:</strong> Escribir texto en la tabla</li>
+            </ul>
+            
+            <h3>Atajos de Teclado</h3>
+            <ul>
+                <li><strong>Espacio:</strong> Iniciar/Detener</li>
+                <li><strong>R:</strong> Reiniciar simulación</li>
+                <li><strong>1-6:</strong> Cambiar entre pestañas</li>
+                <li><strong>H:</strong> Mostrar/ocultar ayuda</li>
+                <li><strong>W:</strong> Mostrar/ocultar espacio de trabajo</li>
+                <li><strong>T:</strong> Grabar posición (modo enseñanza)</li>
+            </ul>
+        </div>
+        
+        <div class="overlay" id="help-overlay"></div>
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.11.4/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/geometries/TextGeometry.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ========== CONFIGURACIÓN INICIAL ==========
+            const config = {
+                drawingSpeed: 1.0,
+                precision: 0.001,  // en metros (1mm)
+                drawingWidth: 0.3, // 30cm
+                drawingHeight: 0.4, // 40cm
+                lineWidth: 0.002,   // 2mm
+                penColor: 0xff0000,
+                tableColor: 0x8B4513,
+                robotBaseColor: 0x333333,
+                robotArmColor: 0x555555,
+                renderQuality: 'medium',
+                showWorkEnvelope: true,
+                showTrajectory: true
+            };
+            
+            // Parámetros del robot PUMA 500 (en metros)
+            const robotParams = {
+                L1: 0.3,  // Altura base-hombro
+                L2: 0.8,  // Longitud brazo superior
+                L3: 0.6,  // Longitud antebrazo
+                L4: 0.15, // Longitud muñeca
+                L5: 0.1   // Longitud herramienta
+            };
+            
+            // Límites de las articulaciones (en grados)
+            const jointLimits = {
+                joint1: { min: -160, max: 160 },     // Base
+                joint2: { min: -110, max: 110 },     // Hombro
+                joint3: { min: -135, max: 135 },     // Codo
+                joint4: { min: -266, max: 266 },     // Muñeca (permite múltiples vueltas)
+                joint5: { min: -100, max: 100 },     // Rotación herramienta
+                joint6: { min: -90, max: 90 }        // Pinza
+            };
+            
+            // Definir diferentes espacios de trabajo
+            const workSpaces = {
+                standard: {
+                    minX: -0.8, maxX: 0.8,
+                    minY: 0.1, maxY: 1.2,
+                    minZ: -0.8, maxZ: 0.8
+                },
+                large: {
+                    minX: -1.0, maxX: 1.0,
+                    minY: 0.1, maxY: 1.5,
+                    minZ: -1.0, maxZ: 1.0
+                },
+                vertical: {
+                    minX: -0.6, maxX: 0.6,
+                    minY: 0.1, maxY: 1.8,
+                    minZ: -0.3, maxZ: 0.3
+                },
+                custom: null // Se establecerá dinámicamente
+            };
+            
+            // Espacio de trabajo actual
+            let currentWorkSpace = workSpaces.standard;
+            
+            // ========== ESTADO DE LA APLICACIÓN ==========
+            const state = {
+                isDrawing: false,
+                manualControl: false,
+                currentY: 0.0,
+                direction: 1,
+                xCurrent: 0.0,
+                progress: 0,
+                animationId: null,
+                stats: {
+                    fps: 0,
+                    lastTime: 0,
+                    frameCount: 0,
+                    triangles: 0,
+                    lines: 0
+                },
+                currentPattern: 'logo',
+                workEnvelopeVisible: true,
+                trajectoryVisible: true,
+                teachPositions: []
+            };
+            
+            const jointValues = {
+                joint1: 0,
+                joint2: 0,
+                joint3: 0,
+                joint4: 0,
+                joint5: 0,
+                joint6: 0
+            };
+            
+            // ========== INICIALIZACIÓN THREE.JS ==========
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f5ff);
+            scene.fog = new THREE.FogExp2(0xf0f5ff, 0.02);
+            
+            // Cámara
+            const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 3);
+            
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Controles de cámara
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 1;
+            controls.maxDistance = 8;
+            controls.maxPolarAngle = Math.PI * 0.9;
+            controls.target.set(0, 0.5, 0);
+            
+            // ========== ILUMINACIÓN ==========
+            // Luz ambiental
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            // Luz direccional principal
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            mainLight.position.set(2, 3, 1);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 1024;
+            mainLight.shadow.mapSize.height = 1024;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 10;
+            mainLight.shadow.bias = -0.0001;
+            scene.add(mainLight);
+            
+            // Luz de relleno
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            fillLight.position.set(-1, 1, -1);
+            scene.add(fillLight);
+            
+            // Luz de acento
+            const accentLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.3);
+            accentLight.position.set(0, 2, 0);
+            scene.add(accentLight);
+            
+            // ========== MODELO DEL ROBOT PUMA 500 ==========
+            const robot = new THREE.Group();
+            robot.position.set(-1.5, 0, 0);  // Posicionar el robot a la izquierda
+            scene.add(robot);
+
+            // Base giratoria
+            const base = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.4, 0.4, 0.25, 32),
+                new THREE.MeshStandardMaterial({ 
+                    color: config.robotBaseColor,
+                    metalness: 0.8,
+                    roughness: 0.3
+                })
+            );
+            base.position.y = 0.125;
+            base.castShadow = true;
+            
+            // Hombro (Joint 2)
+            const shoulder = new THREE.Group();
+            shoulder.position.y = robotParams.L1;
+            
+            const shoulderArm = new THREE.Mesh(
+                new THREE.BoxGeometry(0.25, 0.5, 0.25),
+                new THREE.MeshStandardMaterial({ color: config.robotArmColor })
+            );
+            shoulderArm.position.z = 0.125;
+            shoulderArm.castShadow = true;
+            
+            // Brazo superior (Joint 3)
+            const upperArm = new THREE.Group();
+            upperArm.position.y = 0.25;
+            
+            const upperArmMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, robotParams.L2, 0.2),
+                new THREE.MeshStandardMaterial({ color: 0x777777 })
+            );
+            upperArmMesh.position.y = robotParams.L2/2;
+            upperArmMesh.castShadow = true;
+            
+            // Antebrazo (Joint 4)
+            const forearm = new THREE.Group();
+            const forearmMesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.1, 0.1, robotParams.L3, 16),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0x4CAF50,
+                    metalness: 0.5,
+                    roughness: 0.5
+                })
+            );
+            forearmMesh.rotation.x = Math.PI/2;
+            forearmMesh.position.y = robotParams.L3/2;
+            forearmMesh.castShadow = true;
+            
+            // Muñeca (Joint 5)
+            const wrist = new THREE.Group();
+            wrist.position.y = -robotParams.L3/2;
+            
+            const wristJoint = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0x888888 })
+            );
+            
+            // Herramienta (Joint 6)
+            const tool = new THREE.Group();
+            tool.position.z = robotParams.L4;
+            
+            const toolArm = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.03, 0.03, robotParams.L4, 8),
+                new THREE.MeshStandardMaterial({ color: 0x666666 })
+            );
+            toolArm.position.z = -robotParams.L4/2;
+            toolArm.rotation.x = Math.PI/2;
+            
+            const penAssembly = new THREE.Group();
+            const pen = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.02, 0.02, robotParams.L5, 8),
+                new THREE.MeshStandardMaterial({ color: config.penColor })
+            );
+            pen.rotation.x = Math.PI/2;
+            pen.position.z = robotParams.L5/2;
+            
+            // Construcción de la jerarquía del robot
+            robot.add(base);
+            base.add(shoulder);
+            shoulder.add(shoulderArm);
+            shoulderArm.add(upperArm);
+            upperArm.add(upperArmMesh);
+            upperArmMesh.add(forearm);
+            forearm.add(forearmMesh);
+            forearmMesh.add(wrist);
+            wrist.add(wristJoint);
+            wrist.add(tool);
+            tool.add(toolArm);
+            tool.add(penAssembly);
+            penAssembly.add(pen);
+            
+            // ========== ENTORNO DE TRABAJO ==========
+            // Mesa principal
+            const table = new THREE.Mesh(
+                new THREE.BoxGeometry(3, 0.1, 2),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0x696969,
+                    roughness: 0.7,
+                    metalness: 0.1
+                })
+            );
+            table.position.set(0, -0.05, 0);
+            table.receiveShadow = true;
+            scene.add(table);
+
+           
+            // ========== ESPACIO DE TRABAJO ==========
+            const envelopeGeometry = new THREE.BoxGeometry(
+                currentWorkSpace.maxX - currentWorkSpace.minX,
+                currentWorkSpace.maxY - currentWorkSpace.minY,
+                currentWorkSpace.maxZ - currentWorkSpace.minZ
+            );
+            const envelopeMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff00, 
+                transparent: true, 
+                opacity: 0.1,
+                wireframe: true
+            });
+            const envelope = new THREE.Mesh(envelopeGeometry, envelopeMaterial);
+            envelope.position.set(
+                (currentWorkSpace.maxX + currentWorkSpace.minX)/2,
+                (currentWorkSpace.maxY + currentWorkSpace.minY)/2,
+                (currentWorkSpace.maxZ + currentWorkSpace.minZ)/2
+            );
+            scene.add(envelope);
+            
+            // ========== SISTEMA DE DIBUJO ==========
+            const drawingGroup = new THREE.Group();
+            drawingGroup.position.y = 0.001; // Levantar ligeramente para evitar z-fighting
+            scene.add(drawingGroup);
+            
+            // Trayectoria planificada
+            const trajectoryGroup = new THREE.Group();
+            scene.add(trajectoryGroup);
+            
+            let currentLine = null;
+            let linePoints = [];
+            
+            function createNewLine() {
+                const material = new THREE.LineBasicMaterial({ 
+                    color: config.penColor,
+                    linewidth: config.lineWidth
+                });
+                const geometry = new THREE.BufferGeometry();
+                currentLine = new THREE.Line(geometry, material);
+                drawingGroup.add(currentLine);
+                linePoints = [];
+            }
+            
+            function addPointToLine(position) {
+                linePoints.push(position.clone());
+                currentLine.geometry.dispose();
+                currentLine.geometry = new THREE.BufferGeometry().setFromPoints(linePoints);
+            }
+            
+            // ========== SISTEMA DE ESCRITURA ==========
+            const writingGroup = new THREE.Group();
+            writingGroup.position.set(0.5, 0.001, 0);
+            scene.add(writingGroup);
+            
+            // Cargador de fuentes
+            const fontLoader = new THREE.FontLoader();
+            let blockFont, cursiveFont, technicalFont;
+            
+            fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.132.2/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+                blockFont = font;
+            });
+            
+            fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.132.2/examples/fonts/gentilis_regular.typeface.json', function(font) {
+                cursiveFont = font;
+            });
+            
+            fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.132.2/examples/fonts/droid/droid_sans_regular.typeface.json', function(font) {
+                technicalFont = font;
+            });
+            
+            // ========== CINEMÁTICA INVERSA MEJORADA ==========
+            function calculateInverseKinematics(target) {
+                // Parámetros del robot (en metros)
+                const L1 = robotParams.L1;  // Altura base-hombro
+                const L2 = robotParams.L2;  // Longitud brazo superior
+                const L3 = robotParams.L3;  // Longitud antebrazo
+                const L4 = robotParams.L4;  // Longitud muñeca
+                const L5 = robotParams.L5;  // Longitud herramienta
+                
+                // Convertir ángulos actuales a radianes
+                const currentJ5 = jointValues.joint5 * Math.PI / 180;
+                const currentJ6 = jointValues.joint6 * Math.PI / 180;
+                
+                // Posición de la muñeca (descontando la herramienta)
+                const wx = target.x - L5 * Math.cos(currentJ5) * Math.cos(currentJ6);
+                const wy = target.y - L5 * Math.cos(currentJ5) * Math.sin(currentJ6);
+                const wz = target.z - L5 * Math.sin(currentJ5);
+                
+                // Joint 1 (rotación base)
+                const theta1 = Math.atan2(wy, wx);
+                
+                // Distancia horizontal y vertical al hombro
+                const D = Math.sqrt(wx*wx + wy*wy) - L4;
+                const H = wz - L1;
+                
+                // Distancia al codo
+                const R = Math.sqrt(D*D + H*H);
+                
+                // Verificar alcance
+                if (R > (L2 + L3) || R < Math.abs(L2 - L3)) {
+                    console.warn("Punto fuera del alcance del robot");
+                    return null;
+                }
+                
+                // Joint 3 (codo)
+                const cosTheta3 = (R*R - L2*L2 - L3*L3) / (2 * L2 * L3);
+                const theta3 = Math.atan2(Math.sqrt(1 - cosTheta3*cosTheta3), cosTheta3);
+                
+                // Joint 2 (hombro)
+                const theta2 = Math.atan2(H, D) - Math.atan2(L3 * Math.sin(theta3), L2 + L3 * Math.cos(theta3));
+                
+                // Joint 4 (muñeca) - orientación
+                const theta4 = currentJ6 - (theta1 + theta2 + theta3);
+                
+                return {
+                    theta1: theta1,  // Base (J1)
+                    theta2: theta2,  // Hombro (J2)
+                    theta3: theta3,  // Codo (J3)
+                    theta4: theta4,  // Muñeca (J4)
+                    theta5: currentJ5,  // Rotación (J5)
+                    theta6: currentJ6,  // Pinza (J6)
+                    reachable: true
+                };
+            }
+
+            // ========== CINEMÁTICA DIRECTA ==========
+            function calculateForwardKinematics() {
+                const toRad = (deg) => deg * Math.PI / 180;
+                
+                const theta1 = toRad(jointValues.joint1);
+                const theta2 = toRad(jointValues.joint2);
+                const theta3 = toRad(jointValues.joint3);
+                const theta4 = toRad(jointValues.joint4);
+                const theta5 = toRad(jointValues.joint5);
+                const theta6 = toRad(jointValues.joint6);
+                
+                const L1 = robotParams.L1;
+                const L2 = robotParams.L2;
+                const L3 = robotParams.L3;
+                const L4 = robotParams.L4;
+                const L5 = robotParams.L5;
+                
+                // Posición del hombro
+                const shoulderPos = new THREE.Vector3(0, L1, 0);
+                
+                // Posición del codo
+                const elbowPos = new THREE.Vector3(
+                    L2 * Math.sin(theta2) * Math.cos(theta1),
+                    L1 + L2 * Math.cos(theta2),
+                    L2 * Math.sin(theta2) * Math.sin(theta1)
+                );
+                
+                // Posición de la muñeca
+                const wristPos = new THREE.Vector3(
+                    elbowPos.x + L3 * Math.sin(theta2 + theta3) * Math.cos(theta1),
+                    elbowPos.y + L3 * Math.cos(theta2 + theta3),
+                    elbowPos.z + L3 * Math.sin(theta2 + theta3) * Math.sin(theta1)
+                );
+                
+                // Posición del efector final
+                const toolPos = new THREE.Vector3(
+                    wristPos.x + (L4 + L5) * Math.sin(theta2 + theta3 + theta4) * Math.cos(theta1),
+                    wristPos.y + (L4 + L5) * Math.cos(theta2 + theta3 + theta4),
+                    wristPos.z + (L4 + L5) * Math.sin(theta2 + theta3 + theta4) * Math.sin(theta1)
+                );
+                
+                return {
+                    position: toolPos,
+                    orientation: new THREE.Euler(theta5, theta6, theta1 + theta2 + theta3 + theta4, 'XYZ')
+                };
+            }
+
+            // ========== CONTROL DE MOVIMIENTO ==========
+            function moveToPosition(target, duration = 0.5) {
+                return new Promise((resolve) => {
+                    const ik = calculateInverseKinematics(target);
+                    
+                    if (!ik || !ik.reachable) {
+                        console.error("Posición no alcanzable");
+                        resolve(false);
+                        return;
+                    }
+                    
+                    // Convertir radianes a grados
+                    const toDeg = (rad) => rad * 180 / Math.PI;
+                    
+                    // Animación con interpolación suave
+                    gsap.to({}, {
+                        duration: duration,
+                        ease: "power2.inOut",
+                        onUpdate: function() {
+                            // Aplicar transformaciones a todas las articulaciones
+                            jointValues.joint1 = toDeg(ik.theta1);
+                            jointValues.joint2 = toDeg(ik.theta2);
+                            jointValues.joint3 = toDeg(ik.theta3);
+                            jointValues.joint4 = toDeg(ik.theta4);
+                            jointValues.joint5 = toDeg(ik.theta5);
+                            jointValues.joint6 = toDeg(ik.theta6);
+                            
+                            updateJoints();
+                        },
+                        onComplete: function() {
+                            resolve(true);
+                        }
+                    });
+                });
+            }
+
+            // ========== VISUALIZACIÓN DE TRAYECTORIA ==========
+            function showTrajectory(points) {
+                // Limpiar trayectoria anterior
+                trajectoryGroup.clear();
+                
+                if (!state.trajectoryVisible) return;
+                
+                // Crear puntos de trayectoria
+                const trajectoryGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const trajectoryMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0x0000ff, 
+                    linewidth: 1,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                const trajectoryLine = new THREE.Line(trajectoryGeometry, trajectoryMaterial);
+                trajectoryGroup.add(trajectoryLine);
+                
+                // Agregar marcadores para puntos clave
+                points.forEach((point, index) => {
+                    if (index % 5 === 0) { // Mostrar cada 5 puntos para no saturar
+                        const markerGeometry = new THREE.SphereGeometry(0.01, 8, 8);
+                        const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                        marker.position.copy(point);
+                        trajectoryGroup.add(marker);
+                    }
+                });
+            }
+
+            // ========== FUNCIONES PARA MANEJAR ESPACIOS DE TRABAJO ==========
+            function updateWorkEnvelope() {
+                // Actualizar geometría del espacio de trabajo
+                envelope.geometry.dispose();
+                envelope.geometry = new THREE.BoxGeometry(
+                    currentWorkSpace.maxX - currentWorkSpace.minX,
+                    currentWorkSpace.maxY - currentWorkSpace.minY,
+                    currentWorkSpace.maxZ - currentWorkSpace.minZ
+                );
+                
+                // Reposicionar el espacio de trabajo
+                envelope.position.set(
+                    (currentWorkSpace.maxX + currentWorkSpace.minX)/2,
+                    (currentWorkSpace.maxY + currentWorkSpace.minY)/2,
+                    (currentWorkSpace.maxZ + currentWorkSpace.minZ)/2
+                );
+            }
+            
+            function setWorkSpace(type) {
+                if (type === 'custom') {
+                    // Mostrar controles personalizados
+                    document.getElementById('custom-work-space').style.display = 'block';
+                    
+                    // Crear espacio de trabajo personalizado
+                    currentWorkSpace = {
+                        minX: parseFloat(document.getElementById('minX').value) / 1000,
+                        maxX: parseFloat(document.getElementById('maxX').value) / 1000,
+                        minY: parseFloat(document.getElementById('minY').value) / 1000,
+                        maxY: parseFloat(document.getElementById('maxY').value) / 1000,
+                        minZ: parseFloat(document.getElementById('minZ').value) / 1000,
+                        maxZ: parseFloat(document.getElementById('maxZ').value) / 1000
+                    };
+                    
+                    workSpaces.custom = currentWorkSpace;
+                } else {
+                    // Ocultar controles personalizados
+                    document.getElementById('custom-work-space').style.display = 'none';
+                    
+                    // Usar espacio predefinido
+                    currentWorkSpace = workSpaces[type];
+                }
+                
+                updateWorkEnvelope();
+            }
+            
+            function toggleWorkEnvelope() {
+                state.workEnvelopeVisible = !state.workEnvelopeVisible;
+                envelope.visible = state.workEnvelopeVisible;
+                document.getElementById('showWorkEnvelope').checked = state.workEnvelopeVisible;
+            }
+            
+            function toggleTrajectory() {
+                state.trajectoryVisible = !state.trajectoryVisible;
+                trajectoryGroup.visible = state.trajectoryVisible;
+                document.getElementById('showTrajectory').checked = state.trajectoryVisible;
+            }
+            
+            // ========== RUTINAS DE DIBUJO ==========
+            async function executeDrawing() {
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('status').textContent = "▶ Iniciando secuencia de dibujo...";
+                
+                // Definir trayectoria del logo (coordenadas en metros)
+                const logoPath = [
+                    // Letra 'P'
+                    {x: -0.3, y: 0.001, z: -0.3}, {x: -0.3, y: 0.001, z: -0.1},
+                    {x: -0.1, y: 0.001, z: -0.1}, {x: -0.1, y: 0.001, z: -0.2},
+                    {x: -0.3, y: 0.001, z: -0.2},
+                    
+                    // Letra 'U'
+                    {x: 0.0, y: 0.001, z: -0.1}, {x: 0.0, y: 0.001, z: -0.3},
+                    {x: 0.2, y: 0.001, z: -0.3}, {x: 0.2, y: 0.001, z: -0.1},
+                    
+                    // Letra 'M'
+                    {x: 0.3, y: 0.001, z: -0.3}, {x: 0.4, y: 0.001, z: -0.1},
+                    {x: 0.5, y: 0.001, z: -0.3}, {x: 0.6, y: 0.001, z: -0.1},
+                    {x: 0.7, y: 0.001, z: -0.3}
+                ];
+                
+                // Mostrar trayectoria planificada
+                showTrajectory(logoPath.map(p => new THREE.Vector3(p.x, p.y, p.z)));
+                
+                const drawingPoints = [];
+                createNewLine();
+                
+                // Secuencia de movimiento
+                for (let i = 0; i < logoPath.length; i++) {
+                    const point = logoPath[i];
+                    document.getElementById('status').textContent = 
+                        `► Dibujando punto ${i+1}/${logoPath.length}\nX: ${point.x.toFixed(3)} Y: ${point.y.toFixed(3)} Z: ${point.z.toFixed(3)}`;
+                    
+                    const success = await moveToPosition(point, 0.3);
+                    
+                    if (success) {
+                        drawingPoints.push(new THREE.Vector3(point.x, point.y, point.z));
+                        addPointToLine(new THREE.Vector3(point.x, 0.001, point.z));
+                    }
+                }
+                
+                document.getElementById('status').textContent = "✔ Dibujo completado con éxito";
+                document.getElementById('startBtn').disabled = false;
+            }
+
+            async function drawSquare() {
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('status').textContent = "▶ Iniciando dibujo de cuadrado...";
+                
+                const squarePath = [
+                    {x: -0.3, y: 0.001, z: -0.3},
+                    {x: 0.3, y: 0.001, z: -0.3},
+                    {x: 0.3, y: 0.001, z: 0.3},
+                    {x: -0.3, y: 0.001, z: 0.3},
+                    {x: -0.3, y: 0.001, z: -0.3}
+                ];
+                
+                showTrajectory(squarePath.map(p => new THREE.Vector3(p.x, p.y, p.z)));
+                createNewLine();
+                
+                for (let i = 0; i < squarePath.length; i++) {
+                    const point = squarePath[i];
+                    document.getElementById('status').textContent = 
+                        `► Dibujando lado ${i+1}/${squarePath.length}\nX: ${point.x.toFixed(3)} Y: ${point.y.toFixed(3)} Z: ${point.z.toFixed(3)}`;
+                    
+                    const success = await moveToPosition(point, 0.3);
+                    
+                    if (success) {
+                        addPointToLine(new THREE.Vector3(point.x, 0.001, point.z));
+                    }
+                }
+                
+                document.getElementById('status').textContent = "✔ Cuadrado dibujado con éxito";
+                document.getElementById('startBtn').disabled = false;
+            }
+
+            async function drawCircle() {
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('status').textContent = "▶ Iniciando dibujo de círculo...";
+                
+                const radius = 0.2;
+                const segments = 36;
+                const circlePath = [];
+                
+                for (let i = 0; i <= segments; i++) {
+                    const angle = (i / segments) * Math.PI * 2;
+                    circlePath.push({
+                        x: Math.cos(angle) * radius,
+                        y: 0.001,
+                        z: Math.sin(angle) * radius
+                    });
+                }
+                
+                showTrajectory(circlePath.map(p => new THREE.Vector3(p.x, p.y, p.z)));
+                createNewLine();
+                
+                for (let i = 0; i < circlePath.length; i++) {
+                    const point = circlePath[i];
+                    document.getElementById('status').textContent = 
+                        `► Dibujando segmento ${i+1}/${circlePath.length}\nX: ${point.x.toFixed(3)} Y: ${point.y.toFixed(3)} Z: ${point.z.toFixed(3)}`;
+                    
+                    const success = await moveToPosition(point, 0.1);
+                    
+                    if (success) {
+                        addPointToLine(new THREE.Vector3(point.x, 0.001, point.z));
+                    }
+                }
+                
+                document.getElementById('status').textContent = "✔ Círculo dibujado con éxito";
+                document.getElementById('startBtn').disabled = false;
+            }
+
+            async function drawSpiral() {
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('status').textContent = "▶ Iniciando dibujo de espiral...";
+                
+                const turns = 3;
+                const segments = 72;
+                const maxRadius = 0.25;
+                const spiralPath = [];
+                
+                for (let i = 0; i <= segments; i++) {
+                    const progress = i / segments;
+                    const angle = progress * Math.PI * 2 * turns;
+                    const radius = progress * maxRadius;
+                    spiralPath.push({
+                        x: Math.cos(angle) * radius,
+                        y: 0.001,
+                        z: Math.sin(angle) * radius
+                    });
+                }
+                
+                showTrajectory(spiralPath.map(p => new THREE.Vector3(p.x, p.y, p.z)));
+                createNewLine();
+                
+                for (let i = 0; i < spiralPath.length; i++) {
+                    const point = spiralPath[i];
+                    document.getElementById('status').textContent = 
+                        `► Dibujando segmento ${i+1}/${spiralPath.length}\nX: ${point.x.toFixed(3)} Y: ${point.y.toFixed(3)} Z: ${point.z.toFixed(3)}`;
+                    
+                    const success = await moveToPosition(point, 0.1);
+                    
+                    if (success) {
+                        addPointToLine(new THREE.Vector3(point.x, 0.001, point.z));
+                    }
+                }
+                
+                document.getElementById('status').textContent = "✔ Espiral dibujada con éxito";
+                document.getElementById('startBtn').disabled = false;
+            }
+
+            async function drawZigZag() {
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('status').textContent = "▶ Iniciando dibujo en zigzag...";
+                
+                const width = 0.5;
+                const height = 0.4;
+                const segments = 10;
+                const zigzagPath = [];
+                
+                for (let i = 0; i <= segments; i++) {
+                    const x = -width/2 + (i/segments) * width;
+                    const z = (i % 2 === 0) ? -height/2 : height/2;
+                    zigzagPath.push({
+                        x: x,
+                        y: 0.001,
+                        z: z
+                    });
+                }
+                
+                showTrajectory(zigzagPath.map(p => new THREE.Vector3(p.x, p.y, p.z)));
+                createNewLine();
+                
+                for (let i = 0; i < zigzagPath.length; i++) {
+                    const point = zigzagPath[i];
+                    document.getElementById('status').textContent = 
+                        `► Dibujando segmento ${i+1}/${zigzagPath.length}\nX: ${point.x.toFixed(3)} Y: ${point.y.toFixed(3)} Z: ${point.z.toFixed(3)}`;
+                    
+                    const success = await moveToPosition(point, 0.2);
+                    
+                    if (success) {
+                        addPointToLine(new THREE.Vector3(point.x, 0.001, point.z));
+                    }
+                }
+                
+                document.getElementById('status').textContent = "✔ Zigzag dibujado con éxito";
+                document.getElementById('startBtn').disabled = false;
+            }
+
+            async function drawRandom() {
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('status').textContent = "▶ Iniciando dibujo aleatorio...";
+                
+                const points = 20;
+                const randomPath = [];
+                
+                for (let i = 0; i < points; i++) {
+                    randomPath.push({
+                        x: (Math.random() - 0.5) * 0.4,
+                        y: 0.001,
+                        z: (Math.random() - 0.5) * 0.3
+                    });
+                }
+                
+                showTrajectory(randomPath.map(p => new THREE.Vector3(p.x, p.y, p.z)));
+                createNewLine();
+                
+                for (let i = 0; i < randomPath.length; i++) {
+                    const point = randomPath[i];
+                    document.getElementById('status').textContent = 
+                        `► Dibujando punto ${i+1}/${randomPath.length}\nX: ${point.x.toFixed(3)} Y: ${point.y.toFixed(3)} Z: ${point.z.toFixed(3)}`;
+                    
+                    const success = await moveToPosition(point, 0.2);
+                    
+                    if (success) {
+                        addPointToLine(new THREE.Vector3(point.x, 0.001, point.z));
+                    }
+                }
+                
+                document.getElementById('status').textContent = "✔ Dibujo aleatorio completado";
+                document.getElementById('startBtn').disabled = false;
+            }
+
+            // ========== RUTINAS DE ESCRITURA ==========
+            async function writeText() {
+                const text = document.getElementById('textToWrite').value;
+                const fontSize = parseFloat(document.getElementById('fontSize').value) / 100; // Convertir cm a m
+                const fontStyle = document.getElementById('fontStyle').value;
+                
+                if (!text || text.trim() === '') {
+                    document.getElementById('writing-status').textContent = "⚠ Por favor ingrese un texto para escribir";
+                    document.getElementById('writing-status').style.color = '#e74c3c';
+                    return;
+                }
+                
+                document.getElementById('writeBtn').disabled = true;
+                document.getElementById('writing-status').textContent = "▶ Iniciando escritura...";
+                document.getElementById('writing-status').style.color = '';
+                
+                // Limpiar escritura anterior
+                while(writingGroup.children.length > 0) { 
+                    writingGroup.remove(writingGroup.children[0]); 
+                }
+                
+                // Seleccionar fuente según estilo
+                let selectedFont;
+                switch(fontStyle) {
+                    case 'block': selectedFont = blockFont; break;
+                    case 'cursive': selectedFont = cursiveFont; break;
+                    case 'technical': selectedFont = technicalFont; break;
+                    default: selectedFont = blockFont;
+                }
+                
+                if (!selectedFont) {
+                    document.getElementById('writing-status').textContent = "⚠ Fuente no cargada aún, intente nuevamente";
+                    document.getElementById('writing-status').style.color = '#e74c3c';
+                    document.getElementById('writeBtn').disabled = false;
+                    return;
+                }
+                
+                // Crear geometría del texto
+                const textGeometry = new THREE.TextGeometry(text, {
+                    font: selectedFont,
+                    size: fontSize * 0.8,
+                    height: 0.001,
+                    curveSegments: 12,
+                    bevelEnabled: false
+                });
+                
+                // Centrar el texto
+                textGeometry.computeBoundingBox();
+                const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+                textGeometry.translate(-textWidth / 2, -fontSize * 0.3, 0);
+                
+                // Crear malla del texto
+                const textMaterial = new THREE.MeshBasicMaterial({ color: config.penColor });
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                
+                // Posicionar en la tabla de escritura
+                textMesh.position.set(0, 0, 0);
+                textMesh.rotation.x = -Math.PI / 2;
+                
+                writingGroup.add(textMesh);
+                
+                document.getElementById('writing-status').textContent = "✔ Texto escrito con éxito";
+                document.getElementById('writeBtn').disabled = false;
+            }
+
+            // ========== MODO ENSEÑANZA ==========
+            function recordTeachPosition() {
+                const fk = calculateForwardKinematics();
+                const position = {
+                    x: fk.position.x,
+                    y: fk.position.y,
+                    z: fk.position.z,
+                    roll: jointValues.joint5,
+                    pitch: jointValues.joint6,
+                    yaw: jointValues.joint1
+                };
+                
+                state.teachPositions.push(position);
+                updateTeachPositionsList();
+            }
+            
+            function updateTeachPositionsList() {
+                const container = document.getElementById('teach-positions');
+                container.innerHTML = '';
+                
+                state.teachPositions.forEach((pos, index) => {
+                    const posElement = document.createElement('div');
+                    posElement.className = 'teach-position';
+                    
+                    const posText = document.createElement('span');
+                    posText.textContent = `Pos ${index+1}: X=${pos.x.toFixed(3)}, Y=${pos.y.toFixed(3)}, Z=${pos.z.toFixed(3)}`;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'X';
+                    deleteBtn.style.padding = '2px 6px';
+                    deleteBtn.style.fontSize = '10px';
+                    deleteBtn.onclick = () => {
+                        state.teachPositions.splice(index, 1);
+                        updateTeachPositionsList();
+                    };
+                    
+                    posElement.appendChild(posText);
+                    posElement.appendChild(deleteBtn);
+                    container.appendChild(posElement);
+                });
+            }
+            
+            async function playTeachSequence() {
+                if (state.teachPositions.length === 0) {
+                    document.getElementById('status').textContent = "⚠ No hay posiciones grabadas";
+                    return;
+                }
+                
+                document.getElementById('playSequenceBtn').disabled = true;
+                document.getElementById('status').textContent = "▶ Reproduciendo secuencia grabada...";
+                
+                for (let i = 0; i < state.teachPositions.length; i++) {
+                    const pos = state.teachPositions[i];
+                    document.getElementById('status').textContent = 
+                        `► Moviendo a posición ${i+1}/${state.teachPositions.length}\nX: ${pos.x.toFixed(3)} Y: ${pos.y.toFixed(3)} Z: ${pos.z.toFixed(3)}`;
+                    
+                    await moveToPosition({
+                        x: pos.x,
+                        y: pos.y,
+                        z: pos.z
+                    }, 0.5);
+                }
+                
+                document.getElementById('status').textContent = "✔ Secuencia completada";
+                document.getElementById('playSequenceBtn').disabled = false;
+            }
+            
+            function clearTeachSequence() {
+                state.teachPositions = [];
+                updateTeachPositionsList();
+                document.getElementById('status').textContent = "Secuencia de enseñanza borrada";
+            }
+
+            // ========== CONTROL POR COORDENADAS ==========
+            async function moveToCartesianPosition() {
+                const x = parseFloat(document.getElementById('posX').value) / 1000; // mm a m
+                const y = parseFloat(document.getElementById('posY').value) / 1000;
+                const z = parseFloat(document.getElementById('posZ').value) / 1000;
+                const roll = parseFloat(document.getElementById('roll').value);
+                const pitch = parseFloat(document.getElementById('pitch').value);
+                const yaw = parseFloat(document.getElementById('yaw').value);
+                
+                document.getElementById('moveToCartesian').disabled = true;
+                document.getElementById('cartesian-status').textContent = "▶ Moviendo a posición...";
+                
+                // Actualizar valores de orientación
+                jointValues.joint5 = roll;
+                jointValues.joint6 = pitch;
+                jointValues.joint1 = yaw;
+                
+                const success = await moveToPosition({x, y, z}, 1.0);
+                
+                if (success) {
+                    document.getElementById('cartesian-status').textContent = "✔ Posición alcanzada";
+                } else {
+                    document.getElementById('cartesian-status').textContent = "⚠ Posición no alcanzable";
+                    document.getElementById('cartesian-status').style.color = '#e74c3c';
+                }
+                
+                document.getElementById('moveToCartesian').disabled = false;
+            }
+
+            function startDrawing(pattern = 'logo') {
+                if (state.isDrawing) return;
+                
+                state.isDrawing = true;
+                state.currentPattern = pattern;
+                
+                switch(pattern) {
+                    case 'logo':
+                        executeDrawing().then(() => { state.isDrawing = false; });
+                        break;
+                    case 'square':
+                        drawSquare().then(() => { state.isDrawing = false; });
+                        break;
+                    case 'circle':
+                        drawCircle().then(() => { state.isDrawing = false; });
+                        break;
+                    case 'spiral':
+                        drawSpiral().then(() => { state.isDrawing = false; });
+                        break;
+                    case 'zigzag':
+                        drawZigZag().then(() => { state.isDrawing = false; });
+                        break;
+                    case 'random':
+                        drawRandom().then(() => { state.isDrawing = false; });
+                        break;
+                    default:
+                        executeDrawing().then(() => { state.isDrawing = false; });
+                }
+            }
+            
+            function stopDrawing() {
+                state.isDrawing = false;
+                updateStatus(
+                    "⏸ Dibujo detenido\n" +
+                    "🔄 Modo manual activado\n" +
+                    "🎮 Use los controles deslizantes",
+                    'warning'
+                );
+            }
+            
+            function resetSimulation() {
+                state.isDrawing = false;
+                
+                // Resetear valores de las articulaciones
+                jointValues.joint1 = 0;
+                jointValues.joint2 = 0;
+                jointValues.joint3 = 0;
+                jointValues.joint4 = 0;
+                jointValues.joint5 = 0;
+                jointValues.joint6 = 0;
+                
+                updateJoints();
+                
+                // Limpiar dibujo y escritura
+                drawingGroup.clear();
+                writingGroup.clear();
+                trajectoryGroup.clear();
+                
+                // Resetear barra de progreso
+                document.getElementById('progress-bar').style.width = '0%';
+                
+                // Resetear coordenadas cartesianas
+                document.getElementById('posX').value = '0';
+                document.getElementById('posY').value = '300';
+                document.getElementById('posZ').value = '400';
+                document.getElementById('roll').value = '0';
+                document.getElementById('pitch').value = '0';
+                document.getElementById('yaw').value = '0';
+                
+                updateStatus(
+                    "✅ Sistema reinicializado\n" +
+                    "✏️ Herramienta de dibujo lista\n" +
+                    "⏳ Esperando inicio de secuencia",
+                    'success'
+                );
+            }
+            
+            function updateJoints() {
+                // Aplicar límites a las articulaciones
+                jointValues.joint1 = Math.max(jointLimits.joint1.min, Math.min(jointLimits.joint1.max, jointValues.joint1));
+                jointValues.joint2 = Math.max(jointLimits.joint2.min, Math.min(jointLimits.joint2.max, jointValues.joint2));
+                jointValues.joint3 = Math.max(jointLimits.joint3.min, Math.min(jointLimits.joint3.max, jointValues.joint3));
+                jointValues.joint4 = Math.max(jointLimits.joint4.min, Math.min(jointLimits.joint4.max, jointValues.joint4));
+                jointValues.joint5 = Math.max(jointLimits.joint5.min, Math.min(jointLimits.joint5.max, jointValues.joint5));
+                jointValues.joint6 = Math.max(jointLimits.joint6.min, Math.min(jointLimits.joint6.max, jointValues.joint6));
+                
+                // Convertir grados a radianes para las rotaciones
+                const toRad = (deg) => deg * Math.PI / 180;
+                
+                // Actualizar modelo del robot
+                robot.rotation.y = toRad(jointValues.joint1);
+                shoulder.rotation.z = toRad(jointValues.joint2);
+                upperArm.rotation.z = toRad(jointValues.joint3);
+                wrist.rotation.z = toRad(jointValues.joint4);
+                tool.rotation.x = toRad(jointValues.joint5);
+                penAssembly.rotation.z = toRad(jointValues.joint6);
+                
+                // Actualizar valores en los controles
+                document.getElementById('joint1-value').textContent = jointValues.joint1.toFixed(2) + '°';
+                document.getElementById('joint2-value').textContent = jointValues.joint2.toFixed(2) + '°';
+                document.getElementById('joint3-value').textContent = jointValues.joint3.toFixed(2) + '°';
+                document.getElementById('joint4-value').textContent = jointValues.joint4.toFixed(2) + '°';
+                document.getElementById('joint5-value').textContent = jointValues.joint5.toFixed(2) + '°';
+                document.getElementById('joint6-value').textContent = jointValues.joint6.toFixed(2) + '°';
+                
+                // Actualizar rango de valores
+                document.getElementById('joint1').value = jointValues.joint1;
+                document.getElementById('joint2').value = jointValues.joint2;
+                document.getElementById('joint3').value = jointValues.joint3;
+                document.getElementById('joint4').value = jointValues.joint4;
+                document.getElementById('joint5').value = jointValues.joint5;
+                document.getElementById('joint6').value = jointValues.joint6;
+                
+                // Actualizar estilos de los sliders
+                document.getElementById('joint1').style.setProperty('--value-percent', ((jointValues.joint1 + 160) / 320 * 100) + '%');
+                document.getElementById('joint2').style.setProperty('--value-percent', ((jointValues.joint2 + 110) / 220 * 100) + '%');
+                document.getElementById('joint3').style.setProperty('--value-percent', ((jointValues.joint3 + 135) / 270 * 100) + '%');
+                document.getElementById('joint4').style.setProperty('--value-percent', ((jointValues.joint4 + 266) / 532 * 100) + '%');
+                document.getElementById('joint5').style.setProperty('--value-percent', ((jointValues.joint5 + 100) / 200 * 100) + '%');
+                document.getElementById('joint6').style.setProperty('--value-percent', ((jointValues.joint6 + 90) / 180 * 100) + '%');
+            }
+            
+            function updateStatus(message, type = '') {
+                const statusElement = document.getElementById('status');
+                statusElement.innerHTML = message.replace(/\n/g, '<br>');
+                statusElement.className = type;
+            }
+            
+            function updateStats() {
+                // Calcular FPS
+                const now = performance.now();
+                if (state.stats.lastTime) {
+                    state.stats.frameCount++;
+                    if (now >= state.stats.lastTime + 1000) {
+                        state.stats.fps = Math.round((state.stats.frameCount * 1000) / (now - state.stats.lastTime));
+                        state.stats.frameCount = 0;
+                        state.stats.lastTime = now;
+                    }
+                } else {
+                    state.stats.lastTime = now;
+                }
+                
+                // Contar triángulos y líneas
+                state.stats.triangles = 0;
+                state.stats.lines = 0;
+                
+                scene.traverse(function(object) {
+                    if (object.isMesh) {
+                        if (object.geometry.index) {
+                            state.stats.triangles += object.geometry.index.count / 3;
+                        } else {
+                            state.stats.triangles += object.geometry.attributes.position.count / 3;
+                        }
+                    } else if (object.isLine) {
+                        state.stats.lines += object.geometry.attributes.position.count - 1;
+                    }
+                });
+                
+                // Actualizar panel de estadísticas
+                document.getElementById('fps-counter').textContent = state.stats.fps;
+                document.getElementById('triangles-counter').textContent = state.stats.triangles;
+                document.getElementById('lines-counter').textContent = state.stats.lines;
+                
+                // Memoria (solo disponible en Chrome)
+                if (performance.memory) {
+                    document.getElementById('memory-counter').textContent = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1) + ' MB';
+                }
+            }
+            
+            function applySettings() {
+                // Actualizar configuración de dibujo
+                config.drawingSpeed = parseFloat(document.getElementById('speedControl').value);
+                config.precision = parseFloat(document.getElementById('spacingControl').value) / 1000;
+                config.drawingWidth = parseFloat(document.getElementById('widthControl').value) / 100;
+                config.drawingHeight = parseFloat(document.getElementById('heightControl').value) / 100;
+                config.lineWidth = parseFloat(document.getElementById('lineWidth').value) / 1000;
+                
+                // Actualizar color del lápiz
+                const colorHex = document.getElementById('penColor').value;
+                config.penColor = parseInt(colorHex.substring(1), 16);
+                pen.material.color.setHex(config.penColor);
+                
+                // Actualizar calidad de renderizado
+                config.renderQuality = document.getElementById('renderQuality').value;
+                
+                // Aplicar espacio de trabajo seleccionado
+                const workSpaceType = document.getElementById('workSpace').value;
+                setWorkSpace(workSpaceType);
+                
+                // Mostrar/ocultar espacio de trabajo y trayectoria
+                config.showWorkEnvelope = document.getElementById('showWorkEnvelope').checked;
+                config.showTrajectory = document.getElementById('showTrajectory').checked;
+                toggleWorkEnvelope();
+                toggleTrajectory();
+                
+                // Aplicar cambios de calidad
+                switch(config.renderQuality) {
+                    case 'low':
+                        renderer.setPixelRatio(1);
+                        renderer.shadowMap.enabled = false;
+                        break;
+                    case 'medium':
+                        renderer.setPixelRatio(window.devicePixelRatio);
+                        renderer.shadowMap.enabled = true;
+                        renderer.shadowMap.type = THREE.PCFShadowMap;
+                        break;
+                    case 'high':
+                        renderer.setPixelRatio(window.devicePixelRatio);
+                        renderer.shadowMap.enabled = true;
+                        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                        break;
+                }
+                
+                // Actualizar material de las líneas
+                drawingGroup.children.forEach(line => {
+                    line.material.color.setHex(config.penColor);
+                    line.material.linewidth = config.lineWidth;
+                });
+                
+                updateStatus(
+                    "⚙️ Configuración aplicada\n" +
+                    `📏 Ancho: ${(config.drawingWidth * 100).toFixed(1)}cm, Altura: ${(config.drawingHeight * 100).toFixed(1)}cm\n` +
+                    `🎨 Color: ${colorHex}, Grosor: ${(config.lineWidth * 1000).toFixed(1)}mm`,
+                    'success'
+                );
+            }
+            
+            // ========== EVENT LISTENERS ==========
+            document.getElementById('startBtn').addEventListener('click', function() {
+                startDrawing(state.currentPattern);
+            });
+            
+            document.getElementById('stopBtn').addEventListener('click', stopDrawing);
+            
+            document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+            
+            // Controles manuales de articulaciones
+            document.getElementById('joint1').addEventListener('input', function(e) {
+                jointValues.joint1 = parseFloat(e.target.value);
+                updateJoints();
+            });
+            
+            document.getElementById('joint2').addEventListener('input', function(e) {
+                jointValues.joint2 = parseFloat(e.target.value);
+                updateJoints();
+            });
+            
+            document.getElementById('joint3').addEventListener('input', function(e) {
+                jointValues.joint3 = parseFloat(e.target.value);
+                updateJoints();
+            });
+            
+            document.getElementById('joint4').addEventListener('input', function(e) {
+                jointValues.joint4 = parseFloat(e.target.value);
+                updateJoints();
+            });
+            
+            document.getElementById('joint5').addEventListener('input', function(e) {
+                jointValues.joint5 = parseFloat(e.target.value);
+                updateJoints();
+            });
+            
+            document.getElementById('joint6').addEventListener('input', function(e) {
+                jointValues.joint6 = parseFloat(e.target.value);
+                updateJoints();
+            });
+            
+            // Control por coordenadas
+            document.getElementById('moveToCartesian').addEventListener('click', moveToCartesianPosition);
+            
+            // Modo enseñanza
+            document.getElementById('recordPositionBtn').addEventListener('click', recordTeachPosition);
+            document.getElementById('playSequenceBtn').addEventListener('click', playTeachSequence);
+            document.getElementById('clearSequenceBtn').addEventListener('click', clearTeachSequence);
+            
+            // Patrones de dibujo
+            document.getElementById('logoBtn').addEventListener('click', function() {
+                state.currentPattern = 'logo';
+                document.getElementById('pattern-status').textContent = 'Patrón seleccionado: Logo PUMA';
+            });
+            
+            document.getElementById('squareBtn').addEventListener('click', function() {
+                state.currentPattern = 'square';
+                document.getElementById('pattern-status').textContent = 'Patrón seleccionado: Cuadrado';
+            });
+            
+            document.getElementById('circleBtn').addEventListener('click', function() {
+                state.currentPattern = 'circle';
+                document.getElementById('pattern-status').textContent = 'Patrón seleccionado: Círculo';
+            });
+            
+            document.getElementById('spiralBtn').addEventListener('click', function() {
+                state.currentPattern = 'spiral';
+                document.getElementById('pattern-status').textContent = 'Patrón seleccionado: Espiral';
+            });
+            
+            document.getElementById('zigzagBtn').addEventListener('click', function() {
+                state.currentPattern = 'zigzag';
+                document.getElementById('pattern-status').textContent = 'Patrón seleccionado: Zigzag';
+            });
+            
+            document.getElementById('randomBtn').addEventListener('click', function() {
+                state.currentPattern = 'random';
+                document.getElementById('pattern-status').textContent = 'Patrón seleccionado: Aleatorio';
+            });
+            
+            // Escritura de texto
+            document.getElementById('writeBtn').addEventListener('click', writeText);
+            
+            // Aplicar configuración
+            document.getElementById('applySettings').addEventListener('click', applySettings);
+            
+            // Pestañas
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remover clase active de todas las pestañas y contenidos
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Agregar clase active a la pestaña clickeada
+                    this.classList.add('active');
+                    
+                    // Mostrar el contenido correspondiente
+                    const tabId = this.getAttribute('data-tab') + '-tab';
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Ayuda
+            document.getElementById('help-btn').addEventListener('click', function() {
+                document.getElementById('help-modal').style.display = 'block';
+                document.getElementById('help-overlay').style.display = 'block';
+            });
+            
+            document.getElementById('close-help').addEventListener('click', function() {
+                document.getElementById('help-modal').style.display = 'none';
+                document.getElementById('help-overlay').style.display = 'none';
+            });
+            
+            document.getElementById('help-overlay').addEventListener('click', function() {
+                document.getElementById('help-modal').style.display = 'none';
+                this.style.display = 'none';
+            });
+            
+            // Espacio de trabajo
+            document.getElementById('work-envelope-btn').addEventListener('click', toggleWorkEnvelope);
+            document.getElementById('showWorkEnvelope').addEventListener('change', toggleWorkEnvelope);
+            document.getElementById('showTrajectory').addEventListener('change', toggleTrajectory);
+            
+            // Selección de espacio de trabajo
+            document.getElementById('workSpace').addEventListener('change', function(e) {
+                setWorkSpace(e.target.value);
+            });
+            
+            // Event listeners para controles personalizados
+            document.querySelectorAll('#custom-work-space input').forEach(input => {
+                input.addEventListener('change', function() {
+                    if (document.getElementById('workSpace').value === 'custom') {
+                        setWorkSpace('custom');
+                    }
+                });
+            });
+            
+            // Tooltips
+            document.querySelectorAll('[title]').forEach(element => {
+                element.addEventListener('mouseenter', function(e) {
+                    const tooltip = document.getElementById('tooltip');
+                    tooltip.textContent = this.getAttribute('title');
+                    tooltip.style.left = (e.pageX + 10) + 'px';
+                    tooltip.style.top = (e.pageY + 10) + 'px';
+                    tooltip.style.opacity = '1';
+                });
+                
+                element.addEventListener('mouseleave', function() {
+                    document.getElementById('tooltip').style.opacity = '0';
+                });
+            });
+            
+            // Atajos de teclado
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (state.isDrawing) {
+                        document.getElementById('stopBtn').click();
+                    } else {
+                        document.getElementById('startBtn').click();
+                    }
+                } else if (e.code === 'KeyR') {
+                    e.preventDefault();
+                    document.getElementById('resetBtn').click();
+                } else if (e.code === 'Digit1') {
+                    e.preventDefault();
+                    document.querySelector('.tab[data-tab="control"]').click();
+                } else if (e.code === 'Digit2') {
+                    e.preventDefault();
+                    document.querySelector('.tab[data-tab="coordinates"]').click();
+                } else if (e.code === 'Digit3') {
+                    e.preventDefault();
+                    document.querySelector('.tab[data-tab="teach"]').click();
+                } else if (e.code === 'Digit4') {
+                    e.preventDefault();
+                    document.querySelector('.tab[data-tab="settings"]').click();
+                } else if (e.code === 'Digit5') {
+                    e.preventDefault();
+                    document.querySelector('.tab[data-tab="patterns"]').click();
+                } else if (e.code === 'Digit6') {
+                    e.preventDefault();
+                    document.querySelector('.tab[data-tab="writing"]').click();
+                } else if (e.code === 'KeyH') {
+                    e.preventDefault();
+                    document.getElementById('help-btn').click();
+                } else if (e.code === 'KeyW') {
+                    e.preventDefault();
+                    toggleWorkEnvelope();
+                } else if (e.code === 'KeyT') {
+                    e.preventDefault();
+                    document.getElementById('recordPositionBtn').click();
+                }
+            });
+            
+            // ========== MANEJO DE REDIMENSIONAMIENTO ==========
+            window.addEventListener('resize', function() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            // ========== ANIMACIÓN ==========
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+                updateStats();
+            }
+            
+            // Inicialización
+            resetSimulation();
+            animate();
+        });
+    </script>
+</body>
+</html>
